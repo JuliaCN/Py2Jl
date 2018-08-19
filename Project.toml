@@ -1,0 +1,10 @@
+name = "Py2Jl"
+uuid = "e53ffe30-a369-11e8-316f-1171168155ae"
+authors = ["thautwarm <twshere@outlook.com>"]
+version = "0.1.0"
+
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -1,0 +1,94 @@
+{
+  "class": "Module",
+  "body": [
+    {
+      "class": "FunctionDef",
+      "name": "prod",
+      "args": {
+        "class": "arguments",
+        "args": [
+          {
+            "class": "arg",
+            "arg": "lst",
+            "annotation": null
+          }
+        ],
+        "vararg": null,
+        "kwonlyargs": [],
+        "kw_defaults": [],
+        "kwarg": null,
+        "defaults": []
+      },
+      "body": [
+        {
+          "class": "Assign",
+          "targets": [
+            {
+              "class": "Name",
+              "id": "s",
+              "ctx": {
+                "class": "Store"
+              }
+            }
+          ],
+          "value": {
+            "class": "Num",
+            "n": 0
+          }
+        },
+        {
+          "class": "For",
+          "target": {
+            "class": "Name",
+            "id": "each",
+            "ctx": {
+              "class": "Store"
+            }
+          },
+          "iter": {
+            "class": "Name",
+            "id": "lst",
+            "ctx": {
+              "class": "Load"
+            }
+          },
+          "body": [
+            {
+              "class": "AugAssign",
+              "target": {
+                "class": "Name",
+                "id": "s",
+                "ctx": {
+                  "class": "Store"
+                }
+              },
+              "op": {
+                "class": "Mult"
+              },
+              "value": {
+                "class": "Name",
+                "id": "each",
+                "ctx": {
+                  "class": "Load"
+                }
+              }
+            }
+          ],
+          "orelse": []
+        },
+        {
+          "class": "Return",
+          "value": {
+            "class": "Name",
+            "id": "s",
+            "ctx": {
+              "class": "Load"
+            }
+          }
+        }
+      ],
+      "decorator_list": [],
+      "returns": null
+    }
+  ]
+}
