@@ -1,13 +1,14 @@
 
 ## Python ASDL
 
-https://github.com/python/cpython/blob/master/Parser/Python.asdl
-With this you can get clear understanding of python's ast.
+https://github.com/python/cpython/blob/master/Parser/Python.asdl  
+
+With this you can get a clear understanding of python's ast.
 
 
 - Additional suggestions for Python: `astpretty`, `ast.parse`
 
-```
+```python
 integrated-terminal> from astpretty import pprint as pp
 integrated-terminal> from ast import parse as p
 integrated-terminal> from toolz import compose
@@ -44,7 +45,7 @@ Module(
 
 - Additional suggestions from Julia:
 
-```
+```julia
 julia> macro q(a) dump(a) end
 julia> @q while x
           x + 1
