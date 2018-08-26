@@ -1,9 +1,9 @@
 module ASTGen
-
+export to_ast
 using MLStyle
 
 macro not_implemented_yet()
-    @error "not_implemented_yet"
+    :(@error "notimplemented yet")
 end
 
 function ret_nil(node)
@@ -46,23 +46,26 @@ function to_ast(filename, python :: Dict)
 
     @def apply begin
 
-    (num :: Number) => num
-    (str :: String) => str
+    (num :: Number)  => num
+    (str :: String)  => str
     (nil :: Nothing) => nil
 
-    Dict(:class => "Module", :body => body) =>
+    Dict(:class => "Module", :body  => body) =>
         # What does the first index of ast of `module` mean?
         Expr(:module, true, Symbol(filename), map(apply, body)...)
 
+    Dict(:class => "Name", :id => id) => Symbol(id)
 
     Dict(:class => fn_ty_name,
          :args =>
-             Dict(:vararg => vararg,
-                  :kwonlyargs => kwonlyargs,
+             Dict(:vararg      => vararg,
+                  :args        => args,
+                  :kwonlyargs  => kwonlyargs,
                   :kw_defaults => kw_defaults,
-                  :kwarg => kwarg,
-                  :lineno => lineno, :colno => colno),
-         :body = body) in fn_ast =>
+                  :kwarg       => kwarg,
+                  :lineno      => lineno,
+                  :colno       => colno),
+         :body => body) in fn_ast =>
          begin
             if kwarg === nothing && isempty(kwonlyargs)
                if is_empty(kw_defaults) && is_empty(defaults)
@@ -89,32 +92,32 @@ function to_ast(filename, python :: Dict)
             end
          end
 
-    Dict(:class => "Assign",
+    Dict(:class   => "Assign",
          :targets => targets,
-         :value => value) =>
+         :value   => value) =>
 
          reduce(targets, init = apply(value)) do last, target
             Expr(:(=), target, last)
          end |> ret_nil
 
-    Dict(:class => "AugAssign",
+    Dict(:class  => "AugAssign",
          :target => target,
-         :op => op,
-         :value => value) =>
+         :op     => op,
+         :value  => value) =>
          @not_implemented_yet
 
-    Dict(:class => "AnnAssign",
-         :target => target,
+    Dict(:class      => "AnnAssign",
+         :target     => target,
          :annotation => annotation,
-         :value => value) =>
+         :value      => value) =>
          annotate(apply(target), apply(annotation)) |>
          target -> assign(target, value)            |>
          ret_nil
 
-    Dict(:class => "For",
-         :target => target,
-         :iter => iter,
-         :body => body,
+    Dict(:class   => "For",
+         :target  => target,
+         :iter    => iter,
+         :body    => body,
          :or_else => or_else) =>
          if isempty(or_else)
             Expr(:for,
@@ -127,9 +130,9 @@ function to_ast(filename, python :: Dict)
             @not_implemented_yet
          end
 
-    Dict(:class => "While",
-         :test  => test,
-         :body => body,
+    Dict(:class   => "While",
+         :test    => test,
+         :body    => body,
          :or_else => or_else) =>
          if isempty(or_else)
             Expr(:while,
@@ -143,7 +146,11 @@ function to_ast(filename, python :: Dict)
 
     Dict(:class => "ClassDef") => @not_implemented_yet
 
-    Dict(:class => "Try", :body => body, :handlers => handlers,:orelse => orelse, :finalbody => finalbody) =>
+    Dict(:class     => "Try",
+         :body      => body,
+         :handlers  => handlers,
+         :orelse    => orelse,
+         :finalbody => finalbody) =>
         if !isempty(finalbody) || !isempty(orelse)
             @not_implemented_yet
         else
@@ -192,13 +199,13 @@ function to_ast(filename, python :: Dict)
 
     Dict(:class => "Continue") => continue!()
 
-    Dict(:class => "If", :test => test, :body=body, :orelse => orelse) =>
+    Dict(:class => "If", :test => test, :body => body, :orelse => orelse) =>
         Expr(:if, apply(test), gather <| map(apply, body), gather <| map(apply, orelse)) |>
         ret_nil
     Dict(:class => "Expr", :value => value) => apply(value) |> ret_nil
 
     Dict(:class => "BinOp", :op => op, :left => left, :right => right) =>
-       @match op[:class] begin
+      let op =  @match op[:class] begin
            # TODO, binary operator in Python cannot be mapped to Julia directly.
            # We should implement Python.(+), Python.(-)...
            "Add"     => (+)
@@ -214,7 +221,10 @@ function to_ast(filename, python :: Dict)
            "BitXor"  => xor
            "BitAnd"  => (&)
            "FloorDiv"=> floor ∘ (/)
-       end |> it -> call(it, apply(left), apply(right))
+      end
+          call(op, (apply(left), apply(right)))
+      end
+    _ in this => @error this
     end
 
     apply(python)

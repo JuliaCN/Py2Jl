@@ -44,7 +44,7 @@ def from_file(input: 'filename', to: 'filename'):
     with path.open('r') as fr, Path(to).open('w') as fw:
         try:
             data = to_dict(ast.parse(fr.read()))
-            data['name'] = path.relative()[-3:]  # remove `.py`
+            data['name'] = path.relative()[:-3]  # remove `.py`
             json.dump([str(path), data], fw, indent=2)
         except SyntaxError as e:
             print(e)
