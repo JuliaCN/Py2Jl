@@ -1,94 +1,147 @@
-{
-  "class": "Module",
-  "body": [
-    {
-      "class": "FunctionDef",
-      "name": "prod",
-      "args": {
-        "class": "arguments",
-        "args": [
-          {
-            "class": "arg",
-            "arg": "lst",
-            "annotation": null
-          }
-        ],
-        "vararg": null,
-        "kwonlyargs": [],
-        "kw_defaults": [],
-        "kwarg": null,
-        "defaults": []
-      },
-      "body": [
-        {
-          "class": "Assign",
-          "targets": [
+[
+  "C:\\Users\\twshe\\github\\Py2Jl.jl\\test.py",
+  {
+    "class": "Module",
+    "body": [
+      {
+        "class": "FunctionDef",
+        "name": "prod",
+        "args": {
+          "class": "arguments",
+          "args": [
             {
-              "class": "Name",
-              "id": "s",
-              "ctx": {
-                "class": "Store"
-              }
+              "class": "arg",
+              "arg": "lst",
+              "annotation": null,
+              "lineno": 3,
+              "colno": 9
             }
           ],
-          "value": {
-            "class": "Num",
-            "n": 0
-          }
+          "vararg": null,
+          "kwonlyargs": [],
+          "kw_defaults": [],
+          "kwarg": null,
+          "defaults": []
         },
-        {
-          "class": "For",
-          "target": {
-            "class": "Name",
-            "id": "each",
-            "ctx": {
-              "class": "Store"
-            }
-          },
-          "iter": {
-            "class": "Name",
-            "id": "lst",
-            "ctx": {
-              "class": "Load"
-            }
-          },
-          "body": [
-            {
-              "class": "AugAssign",
-              "target": {
+        "body": [
+          {
+            "class": "Assign",
+            "targets": [
+              {
                 "class": "Name",
                 "id": "s",
                 "ctx": {
                   "class": "Store"
-                }
-              },
-              "op": {
-                "class": "Mult"
-              },
-              "value": {
-                "class": "Name",
-                "id": "each",
-                "ctx": {
-                  "class": "Load"
-                }
+                },
+                "lineno": 4,
+                "colno": 8
               }
-            }
-          ],
-          "orelse": []
-        },
-        {
-          "class": "Return",
+            ],
+            "value": {
+              "class": "Num",
+              "n": 0,
+              "lineno": 4,
+              "colno": 12
+            },
+            "lineno": 4,
+            "colno": 8
+          },
+          {
+            "class": "For",
+            "target": {
+              "class": "Name",
+              "id": "each",
+              "ctx": {
+                "class": "Store"
+              },
+              "lineno": 5,
+              "colno": 12
+            },
+            "iter": {
+              "class": "Name",
+              "id": "lst",
+              "ctx": {
+                "class": "Load"
+              },
+              "lineno": 5,
+              "colno": 20
+            },
+            "body": [
+              {
+                "class": "AugAssign",
+                "target": {
+                  "class": "Name",
+                  "id": "s",
+                  "ctx": {
+                    "class": "Store"
+                  },
+                  "lineno": 6,
+                  "colno": 16
+                },
+                "op": {
+                  "class": "Mult"
+                },
+                "value": {
+                  "class": "Name",
+                  "id": "each",
+                  "ctx": {
+                    "class": "Load"
+                  },
+                  "lineno": 6,
+                  "colno": 21
+                },
+                "lineno": 6,
+                "colno": 16
+              }
+            ],
+            "orelse": [],
+            "lineno": 5,
+            "colno": 8
+          },
+          {
+            "class": "Return",
+            "value": {
+              "class": "Name",
+              "id": "s",
+              "ctx": {
+                "class": "Load"
+              },
+              "lineno": 7,
+              "colno": 15
+            },
+            "lineno": 7,
+            "colno": 8
+          }
+        ],
+        "decorator_list": [],
+        "returns": null,
+        "lineno": 3,
+        "colno": 0
+      },
+      {
+        "class": "Expr",
+        "value": {
+          "class": "Attribute",
           "value": {
             "class": "Name",
-            "id": "s",
+            "id": "g",
             "ctx": {
               "class": "Load"
-            }
-          }
-        }
-      ],
-      "decorator_list": [],
-      "returns": null
-    }
-  ]
-}
+            },
+            "lineno": 9,
+            "colno": 0
+          },
+          "attr": "a",
+          "ctx": {
+            "class": "Load"
+          },
+          "lineno": 9,
+          "colno": 0
+        },
+        "lineno": 9,
+        "colno": 0
+      }
+    ],
+    "name": ".py"
+  }
+]

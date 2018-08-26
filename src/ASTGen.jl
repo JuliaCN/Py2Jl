@@ -50,9 +50,9 @@ function to_ast(filename, python :: Dict)
     (str :: String) => str
     (nil :: Nothing) => nil
 
-    Dict(:class => "Module", :name => name, :body => body) =>
+    Dict(:class => "Module", :body => body) =>
         # What does the first index of ast of `module` mean?
-        Expr(:module, true, map(apply, body)...)
+        Expr(:module, true, Symbol(filename), map(apply, body)...)
 
 
     Dict(:class => fn_ty_name,
@@ -121,7 +121,9 @@ function to_ast(filename, python :: Dict)
                  assign(apply(target), apply(iter)),
                  gather <| map(apply, body))
          else
-            # a efficient implementation of `for...else...` is necessary.
+             # a efficient implementation of `for...else...` is necessary.
+             # ant `iter` in Julia like that of Python?
+             # I want to create a consumable generator of a iterable one.
             @not_implemented_yet
          end
 
@@ -141,24 +143,79 @@ function to_ast(filename, python :: Dict)
 
     Dict(:class => "ClassDef") => @not_implemented_yet
 
-    Dict(:class => "Raise")   => @not_implemented_yet
+    Dict(:class => "Try", :body => body, :handlers => handlers,:orelse => orelse, :finalbody => finalbody) =>
+        if !isempty(finalbody) || !isempty(orelse)
+            @not_implemented_yet
+        else
+            ret = Expr(:try, gather <| map(apply, body))
+            if isempty(handlers)
+                return ret
+            end
+            args = ret.args
+            push!(args, :except)
+
+            init = call(throw, (:except, ))
+            foldr(handlers) do handler, last
+                @match handler begin
+                    Dict(:type => exc, :name=>nothing, :body=>body){(name=:except; true)} |
+                    Dict(:type => exc, :name=>name,    :body=>body) =>
+                    quote
+                        if except isa $(apply(exc))
+                            $name = except
+                            $(map(apply, body)...)
+                        else
+                            $last
+                        end
+                    end
+
+                    _ => @error "Unknown python ast."
+                end
+            end |> it -> push!(args, it)
+            ret
+        end
+
+    Dict(:class => "Raise", :exc => nothing, :cause => nothing)   => call(throw, ())
+
+    Dict(:class => "Raise", :exc => exc, :cause => nothing) => call(throw, (apply(exc), ))
+
+    Dict(:class => "Raise", :exc => _, :cause => _) => @not_implemented_yet
 
     Dict(:class => "Import") => @not_implemented_yet
 
     Dict(:class => "ImportFrom") => @not_implemented_yet
 
-    Dict(:class => "Global",
-         :names = names) => as_global(map(apply, names))
+    Dict(:class => "Global", :names => names) => Expr(:global, map(Symbol, names))
+
     Dict(:class => "Pass") => nothing
 
     Dict(:class => "Break") => break!()
 
     Dict(:class => "Continue") => continue!()
 
+    Dict(:class => "If", :test => test, :body=body, :orelse => orelse) =>
+        Expr(:if, apply(test), gather <| map(apply, body), gather <| map(apply, orelse)) |>
+        ret_nil
+    Dict(:class => "Expr", :value => value) => apply(value) |> ret_nil
 
+    Dict(:class => "BinOp", :op => op, :left => left, :right => right) =>
+       @match op[:class] begin
+           # TODO, binary operator in Python cannot be mapped to Julia directly.
+           # We should implement Python.(+), Python.(-)...
+           "Add"     => (+)
+           "Sub"     => (-)
+           "Mult"    => (.*)
+           "Div"     => (./)
+           "MatMult" => (*)
+           "Mod"     => (%)
+           "Pow"     => (^)
+           "LShift"  => (<<)
+           "RShift"  => (>>)
+           "BitOr"   => (|)
+           "BitXor"  => xor
+           "BitAnd"  => (&)
+           "FloorDiv"=> floor ∘ (/)
+       end |> it -> call(it, apply(left), apply(right))
     end
-
-
 
     apply(python)
 
