@@ -8,23 +8,23 @@ However if you include it in Main, everything is okay.
 module Process
 export to_dict, process
 using PyCall
+
 @pyimport builtins
 @pyimport ast
+
+repr = py"repr"
 
 pisa = builtins.isinstance
 phas = builtins.hasattr
 
 to_dict(py_obj :: PyObject) :: Any = if pisa(py_obj, ast.AST)
-        ty     = py_obj[:__class__]
+        ty     = py_obj[:__class__][:__name__]
         fields = py_obj[:_fields] |> collect
-
         map(fields) do field
-
             field = Symbol(field)
             value = py_obj[field]
-
             field =>
-                if value isa Vector
+                if value isa Vector || value isa Tuple
                     map(to_dict, value)
                 else
                     value |> to_dict
@@ -38,7 +38,7 @@ to_dict(py_obj :: PyObject) :: Any = if pisa(py_obj, ast.AST)
             if phas(py_obj, "col_offset")
                 dict[:colno] = py_obj[:col_offset]
             end
-            dict[:type] = ty
+            dict[:class] = ty
             dict
         end
     else
@@ -47,9 +47,11 @@ to_dict(py_obj :: PyObject) :: Any = if pisa(py_obj, ast.AST)
 
 to_dict(num :: Number) = num
 to_dict(str :: String) = str
+to_dict(::Nothing) = nothing
 
 function process(codes:: String)
-    to_dict(ast.parse(codes))
+    node = ast.parse(codes)
+    to_dict(node)
 end
 
 end

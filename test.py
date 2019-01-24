@@ -1,9 +1,8 @@
 
 
 def prod(lst):
-        s = 0
-        for each in lst:
-                s *= each
-        return s
+        try:
+            x
+        except (A, B):
+            c
 
-g.a

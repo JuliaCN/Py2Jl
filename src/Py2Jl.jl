@@ -1,9 +1,10 @@
 module Py2Jl
-export from_file, to_ast
-using PyCall
+export from_file, to_ast, process
 
-include("JsonProcess.jl")
+include("Process.jl")
+
 include("ASTGen.jl")
+
 using .Process
 using .ASTGen
 end # module

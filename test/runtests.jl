@@ -45,3 +45,4 @@ to_dict(str :: String) = str
 
 node = ast.parse("f(x) + 1")
 result = to_dict(node)
+@info result
