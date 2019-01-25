@@ -24,11 +24,26 @@ eg.
 > mod.sumBy(identity, [1, 2, 3])
 > 6
 """
+
+module Config
+    verbose = false
+
+    verbose!() = begin
+       global verbose = true;
+    end
+
+    not_verbose() = begin
+        global verbose = false;
+    end
+
+    verbose = false
+end
+
 macro py2jl_str(code)
-    mod_name_unique = Int(pointer_from_objref(ModRefHelper()))
-    mod_name = "Py2Jl$mod_name_unique"
-    node = to_ast(mod_name, process(code))
-    println(node)
+    node = to_ast(nothing, process(code))
+    if Config.verbose
+        println(node)
+    end
     esc(node)
 end
 

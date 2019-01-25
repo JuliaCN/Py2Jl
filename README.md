@@ -25,4 +25,5 @@ Currently, we can transpile a single python module with limited constructs into 
 - Classes
 - Imports(Dynamically import mechansim might not be supported forever)
 - Attributes(`obj.attr`)
+- Python compatible `built-in`s like `map`, `print` and many standard libs.
 

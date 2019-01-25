@@ -172,7 +172,16 @@ function to_ast(filename, python :: Dict)
         (:: Nothing)     -> nothing
 
         Record(:class => "Module", body) ->
-            Expr(:module, true, Symbol(filename), gather <| [assign(IS_BREAK, false), map(apply, body)...])
+                let body = gather <| [
+                    assign(IS_BREAK, false),
+                    map(apply, body)...
+                    ]
+
+                    filename === nothing ?
+                    body                 :
+                    Expr(:module, true, Symbol(filename), body)
+                end
+
         Record(:class => "Name", id) ->
             Symbol(id)
         Record(:class => "Num", n) -> n
