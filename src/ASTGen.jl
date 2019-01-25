@@ -95,6 +95,7 @@ function for_iter(f :: Function, iter_arg, seq, body)
     token = mangle()
     result = mangle()
     check_break = Expr(:block,
+        as_global(IS_BREAK),
         assign(token, IS_BREAK),
         assign(IS_BREAK, false),
         basic,
@@ -104,7 +105,7 @@ function for_iter(f :: Function, iter_arg, seq, body)
 end
 
 function for_iter(iter_arg, seq, body)
-    for_iter((_) -> nothing, iter_arg, seq, body)
+    for_iter(() -> nothing, iter_arg, seq, body)
 end
 
 function while_loop(f :: Function, cond, body)
@@ -112,6 +113,7 @@ function while_loop(f :: Function, cond, body)
     token = mangle()
     result = mangle()
     check_break = Expr(:block,
+        as_global(IS_BREAK),
         assign(token, IS_BREAK),
         assign(IS_BREAK, false),
         basic,
@@ -121,14 +123,14 @@ function while_loop(f :: Function, cond, body)
 end
 
 function while_loop(cond, body)
-    while_loop((_) -> nothing, cond, body)
+    while_loop(() -> nothing, cond, body)
 end
 
 function call(fn, args...)
     Expr(:call, fn, args...)
 end
 
-function as_global(names)
+function as_global(names...)
     Expr(:global, names...)
 end
 
