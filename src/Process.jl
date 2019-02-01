@@ -9,13 +9,16 @@ module Process
 export to_dict, process
 using PyCall
 
-@pyimport builtins
-@pyimport ast
 
-pisa = builtins.isinstance
-phas = builtins.hasattr
 
-to_dict(py_obj :: PyObject) :: Any = if pisa(py_obj, ast.AST)
+function to_dict(py_obj :: PyObject) :: Any
+
+    pisa = pybuiltin("isinstance")
+    phas = pybuiltin("hasattr")
+    ast = pyimport("ast")
+    AST = ast[:AST]
+    if pisa(py_obj, AST)
+
         ty     = py_obj[:__class__][:__name__]
         fields = py_obj[:_fields] |> collect
         map(fields) do field
@@ -40,15 +43,18 @@ to_dict(py_obj :: PyObject) :: Any = if pisa(py_obj, ast.AST)
             dict
         end
     else
-        @error "Invalid pyobj. Expected $(ast.AST), got $(py_obj[:__class__])."
+        @error "Invalid pyobj. Expected $(string(AST)), got $(py_obj[:__class__])."
     end
+end
 
 to_dict(num :: Number) = num
 to_dict(str :: String) = str
 to_dict(::Nothing) = nothing
 
 function process(codes:: String)
-    node = ast.parse(codes)
+
+    ast = pyimport("ast")
+    node = ast[:parse](codes)
     to_dict(node)
 end
 
