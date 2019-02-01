@@ -14,15 +14,15 @@ eg.
     def sumBy(f, seq):
         s = 0
         for each in seq:
-            s = s + each
+            s = s + f(each)
         return s
 
-    result = sumBy(lambda x: x + 1, [100, 200])
+    result = sumBy(identity, [100, 200])
     print(result)
   \"\"\"
 > 300
-> mod.sumBy(identity, [1, 2, 3])
-> 6
+> mod.sumBy(x -> 2x, [1, 2, 3])
+> 12
 """
 
 module Config
