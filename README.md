@@ -1,7 +1,7 @@
 # Py2Jl
 Python to Julia transpiler.
 
-[![Show cases](./emmm.png)](./emmm.png)
+[![Preview](./preview.png)](./preview.png)
 
 ## Usage
 
