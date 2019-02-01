@@ -12,8 +12,6 @@ using PyCall
 @pyimport builtins
 @pyimport ast
 
-repr = py"repr"
-
 pisa = builtins.isinstance
 phas = builtins.hasattr
 

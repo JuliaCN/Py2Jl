@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a17b211c-ac80-411a-9c1e-b9553b173bdf" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Manifest.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Manifest.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Project.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ASTGen.jl" beforeDir="false" afterPath="$PROJECT_DIR$/src/ASTGen.jl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Py2Jl.jl" beforeDir="false" afterPath="$PROJECT_DIR$/src/Py2Jl.jl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.jl" beforeDir="false" afterPath="$PROJECT_DIR$/test.jl" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -230,7 +224,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="27" width="1920" height="1020" extended-state="6" />
+    <frame x="0" y="27" width="1920" height="1020" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info anchor="right" id="Palette" order="3" />

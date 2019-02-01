@@ -10,18 +10,22 @@ pkg> add PyCall JSON
 julia> ENV["PYTHON"] = raw"<your python exe path>"
 pkg> build PyCall
 pkg> add https://github.com/JuliaCN/Py2Jl.jl#master
-julia> using Py2Jl
-julia> py2jl"""
+```
+Then open a file(check [demo.jl](./demo.jl)) and write
+
+```julia
+using Py2Jl
+
+py2jl"""
 def sum_by(f, seq):
     s = 0
     for e in seq:
         s += e
     return s
 """
-julia> sum_by(x -> 2x, [1, 2, 3])
-12
+@info sum_by(x -> 2x, [1, 2, 3])
 
-julia> println(py2jl("mymod", """
+@info println(py2jl("mymod", """
 def sum_by(f, seq):
     s = 0
     for e in seq:
