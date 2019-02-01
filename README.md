@@ -6,7 +6,7 @@ Python to Julia transpiler.
 ## Usage
 
 ```shell
-pkg> add PyCall JSON
+pkg> add PyCall JSON MLStyle
 julia> ENV["PYTHON"] = raw"<your python exe path>"
 pkg> build PyCall
 pkg> add https://github.com/JuliaCN/Py2Jl.jl#master
