@@ -38,8 +38,7 @@ module Extension
 
     ASTGen = parentmodule(Extension)
 
-
-    defAppPattern(Extension,
+    def_app_pattern(Extension,
         predicate = (hd_obj, args) -> hd_obj === Record,
         rewrite = (tag, hd_obj, args, mod) ->
         let
@@ -49,9 +48,9 @@ module Extension
                     end : arg)
                     for arg in args)
             pat = :(Dict($(args...)))
-            mkPattern(tag, pat, mod)
+            mk_pattern(tag, pat, mod)
         end,
-        qualifiers = Set([qualifier((_, u) -> u === ASTGen)])
+        qualifiers = Set([(_, u) -> u === ASTGen])
     )
 end
 
@@ -85,8 +84,8 @@ end
 
 function gather(args)
     isempty(args) ? nothing :
-        length(args) === 1 ? args[1] :
-            Expr(:block, args...)
+    length(args) === 1 && args[1] isa Expr ? args[1] :
+    Expr(:block, args...)
 
 end
 
@@ -94,18 +93,17 @@ function for_iter(f :: Function, iter_arg, seq, body)
     basic = Expr(:for, assign(iter_arg, seq), body)
     token = mangle()
     result = mangle()
-    check_break = Expr(:block,
-        as_global(IS_BREAK),
-        assign(token, IS_BREAK),
-        assign(IS_BREAK, false),
+    check_break = Expr(
+        :block,
+        assign(token, Expr(:call, Ref, false)),
+        assign(IS_BREAK, token),
         basic,
-        f(),
-        assign(IS_BREAK, token)
+        f(token),
     )
 end
 
 function for_iter(iter_arg, seq, body)
-    for_iter(() -> nothing, iter_arg, seq, body)
+    for_iter((_) -> nothing, iter_arg, seq, body)
 end
 
 function while_loop(f :: Function, cond, body)
@@ -113,17 +111,15 @@ function while_loop(f :: Function, cond, body)
     token = mangle()
     result = mangle()
     check_break = Expr(:block,
-        as_global(IS_BREAK),
-        assign(token, IS_BREAK),
-        assign(IS_BREAK, false),
+        assign(token, Expr(:call, Ref, false)),
+        assign(IS_BREAK, token),
         basic,
-        f(),
-        assign(IS_BREAK, token)
+        f(token),
     )
 end
 
 function while_loop(cond, body)
-    while_loop(() -> nothing, cond, body)
+    while_loop((_) -> nothing, cond, body)
 end
 
 function call(fn, args...)
@@ -134,8 +130,12 @@ function as_global(names...)
     Expr(:global, names...)
 end
 
+function get_attr(expr, attr :: Symbol)
+    Expr(:., expr, QuoteNode(attr))
+end
+
 function break!()
-    Expr(:block, assign(IS_BREAK, true), Expr(:break))
+    Expr(:block, assign(get_attr(IS_BREAK, :x), true), Expr(:break))
 end
 
 function continue!()
@@ -165,17 +165,37 @@ function isinstance(inst, typ)
     Expr(:call, isa, inst, typ)
 end
 
+
 function to_ast(filename, python :: Dict)
+
+    tag_loc = @λ begin
+        (if filename === nothing end &&
+        Record(lineno, colno)) -> LineNumberNode(lineno)
+
+        Record(lineno, colno) -> LineNumberNode(lineno, filename)
+
+        _ -> nothing
+    end
+
+    function trans_block(seq)
+        res = []
+        for each in seq
+            loc = tag_loc(each)
+            if loc !== nothing
+                push!(res, loc)
+            end
+            push!(res, apply(each))
+        end
+        res
+    end
+
     apply = @λ begin
         (num :: Number)  -> num
         (str :: String)  -> str
         (:: Nothing)     -> nothing
 
         Record(:class => "Module", body) ->
-                let body = gather <| [
-                    assign(IS_BREAK, false),
-                    map(apply, body)...
-                    ]
+                let body = gather <| trans_block(body)
 
                     filename === nothing ?
                     body                 :
@@ -188,6 +208,7 @@ function to_ast(filename, python :: Dict)
 
         Record(:class => "List", elts) ->
             map(apply, elts)
+
         Record(:class => "Tuple", elts) ->
             (map(apply, elts)..., )
 
@@ -216,7 +237,7 @@ function to_ast(filename, python :: Dict)
                             Expr(:function, Expr(:tuple, args...), Expr(:block, annos..., apply(body)))
                         else
 
-                            body = gather <| map(apply, body)
+                            body = gather <| trans_block(body)
                             decorator_list = fn_ast[:decorator_list]
                             fn_name = Symbol(fn_ast[:name])
                             init = Expr(:function, Expr(:call, fn_name, args...), Expr(:block, annos..., body))
@@ -249,22 +270,22 @@ function to_ast(filename, python :: Dict)
         Record(:class => "For", target, iter, body, orelse) ->
             let target = apply(target),
                 iter = apply(iter),
-                body = gather <| map(apply, body),
-                orelse = gather <| map(apply, orelse)
+                body = gather <| trans_block(body),
+                orelse = gather <| trans_block(orelse)
 
-                for_iter(target, iter, body) do
-                    ifelse(IS_BREAK, orelse)
+                for_iter(target, iter, body) do token
+                    ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
                 end
 
             end
 
         Record(:class => "While", test, body, orelse) ->
             let cond = apply(test),
-                body = gather <| map(apply, body),
-                orelse = gather <| map(apply, body)
+                body = gather <| trans_block(body),
+                orelse = gather <| trans_block(body)
 
-                 while_loop(cond, body) do
-                    ifelse(IS_BREAK, or_elsse)
+                 while_loop(cond, body) do token
+                    ifelse(Expr(:call, !, get_attr(token, :x)), or_else)
                  end
             end
 
@@ -276,7 +297,7 @@ function to_ast(filename, python :: Dict)
             if !isempty(finalbody) || !isempty(orelse)
                 @not_implemented_yet
             else
-                ret = Expr(:try, gather <| map(apply, body))
+                ret = Expr(:try, gather <| trans_block(body))
                 if isempty(handlers)
                     return ret
                 end
@@ -289,7 +310,7 @@ function to_ast(filename, python :: Dict)
                         Record(:type => exc, name, body) =>
                             let exc = apply(exc),
 
-                                body = gather <| map(apply, body),
+                                body = gather <| trans_block(body),
 
                                 tc = isinstance(except, exc),
 
@@ -327,8 +348,8 @@ function to_ast(filename, python :: Dict)
 
         Record(:class => "If", test, body, orelse) ->
             let cond = apply(test),
-                body = gather <| map(apply, body),
-                orelse = gather <| map(apply, orelse)
+                body = gather <| trans_block(body),
+                orelse = gather <| trans_block(orelse)
 
                 ret_nil <| ifelse(cond, body, orelse)
             end
@@ -369,8 +390,8 @@ function to_ast(filename, python :: Dict)
               call(op, apply(left), apply(right))
           end
         this ->
-            let msg = "class: $(this[:class]), attributes:$([keys(this)...])"
-                @error msg
+            let msg = "$this"
+                throw(msg)
             end
     end
 

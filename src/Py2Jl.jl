@@ -1,5 +1,5 @@
 module Py2Jl
-export from_file, to_ast, process, @py2jl_str
+export py2jl, @py2jl_str
 
 include("Process.jl")
 include("ASTGen.jl")
@@ -39,12 +39,16 @@ module Config
     verbose = false
 end
 
-macro py2jl_str(code)
-    node = to_ast(nothing, process(code))
+function py2jl(module_name :: Union{String, Nothing}, code :: String)
+    node = to_ast(module_name, process(code))
     if Config.verbose
         println(node)
     end
-    esc(node)
+    node
+end
+
+macro py2jl_str(code)
+    esc(py2jl(nothing, code))
 end
 
 

@@ -11,12 +11,15 @@ def sumBy(f, seq):
         s = s + each
     return s
 
+
+
 result = sumBy(lambda x: x + 1, [100, 200])
-print(result)
+
+
 """
 
 println("")
 @info :interops
 
-println(result)
+println(result, "  ", result)
 println(sumBy(identity, 1:100))
