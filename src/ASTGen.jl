@@ -375,9 +375,9 @@ function to_ast(filename, python :: Dict)
                # We should implement Python.(+), Python.(-)...
                "Add"     => (+)
                "Sub"     => (-)
-               "Mult"    => (.*)
-               "Div"     => (./)
-               "MatMult" => (*)
+               "Mult"    => (*)
+               "Div"     => (/)
+               "MatMult" => @not_implemented_yet
                "Mod"     => (%)
                "Pow"     => (^)
                "LShift"  => (<<)
@@ -390,7 +390,7 @@ function to_ast(filename, python :: Dict)
               call(op, apply(left), apply(right))
           end
         this ->
-            let msg = "$this"
+            let msg = "class: $(this[:class]), attributes: $(keys(this))."
                 throw(msg)
             end
     end
