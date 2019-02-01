@@ -21,18 +21,18 @@ py2jl"""
 def sum_by(f, seq):
     s = 0
     for e in seq:
-        s += e
+        s = s + f(e)
     return s
 """
-@info sum_by(x -> 2x, [1, 2, 3])
+@info sum_by(x -> 2x, [1, 2, 3]) # 12
 
-@info println(py2jl("mymod", """
+@info py2jl("mymod", """
 def sum_by(f, seq):
     s = 0
     for e in seq:
-        s += e
+        s = s + e
     return s
-"""))
+""")
 
 ```
 

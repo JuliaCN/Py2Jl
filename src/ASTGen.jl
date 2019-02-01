@@ -57,7 +57,7 @@ end
 using .Extension: Record, @linq
 
 macro not_implemented_yet()
-    :(@error "notimplemented yet")
+    :(throw("notimplemented yet"))
 end
 
 empty_block = Expr(:block)

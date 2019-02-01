@@ -8,7 +8,7 @@ py2jl"""
 def sumBy(f, seq):
     s = 0
     for each in seq:
-        s = s + each
+        s = s + f(each)
     return s
 
 
