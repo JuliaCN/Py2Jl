@@ -11,7 +11,8 @@ julia> ENV["PYTHON"] = raw"<your python exe path>"
 pkg> build PyCall
 pkg> add https://github.com/JuliaCN/Py2Jl.jl#master
 ```
-Then open a file(check [demo.jl](./demo.jl)) and write
+
+To demonstrate, open a file(check [demo.jl](./demo.jl)) and write
 
 ```julia
 using Py2Jl
@@ -33,9 +34,11 @@ def sum_by(f, seq):
     return s
 """))
 
-# will produce Julia source code here
-
 ```
+
+Then type `julia demo.jl` in your shell to check the output.
+
+
 
 ## Motivation
 
