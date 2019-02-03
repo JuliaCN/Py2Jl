@@ -207,10 +207,10 @@ function to_ast(filename, python :: Dict)
         Record(:class => "Num", n) -> n
 
         Record(:class => "List", elts) ->
-            map(apply, elts)
+            Expr(:vect, map(apply, elts)...)
 
         Record(:class => "Tuple", elts) ->
-            (map(apply, elts)..., )
+            Expr(:tuple, map(apply, elts)..., )
 
         Record(:class => "Return", value) -> Expr(:return, apply(value))
 

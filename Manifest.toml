@@ -51,12 +51,10 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[MLStyle]]
-deps = ["Test"]
-git-tree-sha1 = "e7c4ccf771061c71ffc6bab824c393eb87731fa6"
-repo-rev = "master"
-repo-url = "https://github.com/thautwarm/MLStyle.jl.git"
+deps = ["Statistics", "Test"]
+git-tree-sha1 = "bb14ec600351a59326c3058df0e45bd8b4a6dda4"
 uuid = "d8e11817-5142-5d16-987a-aa16d5891078"
-version = "0.2.3"
+version = "0.2.4"
 
 [[MacroTools]]
 deps = ["Compat"]
