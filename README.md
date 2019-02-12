@@ -1,5 +1,6 @@
 # Py2Jl
-Python to Julia transpiler.
+
+Python-to-Julia transpiler.
 
 [![Preview](./preview.png)](./preview.png)
 
@@ -12,7 +13,7 @@ pkg> build PyCall
 pkg> add https://github.com/JuliaCN/Py2Jl.jl#master
 ```
 
-To demonstrate, open a file(check [demo.jl](./demo.jl)) and write
+To demonstrate, open a file (check out [demo.jl](./demo.jl)) and write
 
 ```julia
 using Py2Jl
@@ -33,34 +34,36 @@ def sum_by(f, seq):
         s = s + e
     return s
 """)
-
 ```
 
-Then type `julia demo.jl` in your shell to check the output.
-
-
+Then type `julia demo.jl` in your shell to see the results.
 
 ## Motivation
 
-For packages written in Julia are quite few, and Python is exactly a subset of Julia except some implementation details, it's natural to think about taking advantage of existed Python codebase in Julia ecosystem so that we can have enormous powerful and battle-tested packages.
+Since packages written in Julia are quite few, and Python is exactly a subset of 
+Julia despite some implementation details, it's natural to think about taking
+advantage of existing Python codebase in Julia ecosystem so that we can have a
+great number of powerful and battle-tested packages.
 
-## Stage
+## Status
 
-Currently, we can transpile a single python module with limited constructs into Julia.
-
+Currently, we can transpile a single Python module with limited constructs into 
+Julia ones.
 
 ## Supported Features
-- All the basic constructs like `if-else`, `for`, `while`...
+
+- All the basic constructs like `if-else`, `for`, `while`, etc
 - `while-else`, `for-else` constructs
-- Function invocation with keyword args and varadic args.
-- Arbitrary `try-except`
-- Annotation(but not equivalent to Julia's)
+- Function invocation with keyword args and variadic args
+- Arbitrary `try-except`s
+- Annotation (but not equivalent to Julia's)
 
-## Not Implmeneted Features
+## Not Implemented Features
 
-- Function definitions with keyword args(both `kwargs` and so-called `keyword arg`), default args and varadic args.
+- Function definitions with keyword args (both `kwargs` and so-called
+`keyword arg`), default args and variadic args
 - Classes
-- Imports(Dynamically import mechansim might not be supported forever)
-- Attributes(`obj.attr`)
-- Python compatible `built-in`s like `map`, `print` and many standard libs.
-
+- Imports (dynamically importing might not be supported forever)
+- Attributes (`obj.attr`)
+- Python-compatible built-in functions like `map`, `print` and many standard
+libs
