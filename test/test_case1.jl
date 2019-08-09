@@ -27,5 +27,14 @@ result = sum_by(lambda x: x * 10, [1, 2, 3])
         @test result == 60
         @test sum_by(identity, [1, 2, 3]) === 6
     end
-
+    py2jl"""
+def __BOND_repl():
+    SENTINEL = 1
+    while SENTINEL>1:
+        SENTINEL = 2
+    return SENTINEL
+"""
+    @testset "while & compare" begin
+        @test __BOND_repl() == 1
+    end
 end

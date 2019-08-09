@@ -193,8 +193,11 @@ function isinstance(inst, typ)
 end
 
 
+"""
+Check https://github.com/python/cpython/blob/master/Parser/Python.asdl
+for more implementation details.
+"""
 function to_ast(filename, python :: Dict)
-
     tag_loc = @λ begin
         (if filename === nothing end &&
         Record(lineno, colno)) -> LineNumberNode(lineno)
@@ -309,10 +312,10 @@ function to_ast(filename, python :: Dict)
         Record(:class => "While", test, body, orelse) ->
             let cond = apply(test),
                 body = gather <| trans_block(body),
-                orelse = gather <| trans_block(body)
+                orelse = gather <| trans_block(orelse)
 
                  while_loop(cond, body) do token
-                    ifelse(Expr(:call, !, get_attr(token, :x)), or_else)
+                    ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
                  end
             end
 
@@ -381,8 +384,6 @@ function to_ast(filename, python :: Dict)
                 ret_nil <| ifelse(cond, body, orelse)
             end
 
-
-
         Record(:class => "Expr", value) -> ret_nil <| apply(value)
 
         Record(:class => "Starred", value) -> Expr(:..., apply(value))
@@ -415,6 +416,26 @@ function to_ast(filename, python :: Dict)
                "FloorDiv"=> floor ∘ (/)
           end
               call(op, apply(left), apply(right))
+          end
+
+        Record(:class=> "Compare", left, ops, comparators) ->
+          foldl(zip(ops, comparators) |> collect, init=apply(left)) do last, (op, comparator)
+                let comparator = apply(comparator)
+                    f = @match op[:class] begin
+                        #  Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+                        "Eq" => (==)
+                        "NotEq" => (!=)
+                        "Lt" => (<)
+                        "LtE" => (<=)
+                        "Gt"  => (>)
+                        "GtE" => (>=)
+                        "Is"  => (===)
+                        "IsNot" => (!==)
+                        "In"    => (in)
+                        "NotIn" => (!in)
+                    end
+                    :($f($last, $comparator))
+                end
           end
         this ->
             let msg = "class: $(this[:class]), attributes: $(keys(this))."
