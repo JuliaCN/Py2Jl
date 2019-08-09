@@ -11,7 +11,7 @@ For now, because of a bug in Julia itself, LTS version of Julia, e.g. Julia 1.0.
 Th package now works on 1.1.x, and before on [Julia 1.1.0-rc2](https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.0-rc2-linux-x86_64.tar.gz), but earlier versions at least those nameed LTS ones do segfault.
 
 ```shell
-pkg> add Jy2Jl
+pkg> add Py2Jl
 ```
 
 To demonstrate, open a file (check out [demo.jl](./demo.jl)) and write
