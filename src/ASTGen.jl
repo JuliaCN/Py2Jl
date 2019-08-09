@@ -3,7 +3,32 @@ export to_ast
 using MLStyle
 using JSON
 
+@inline function ID(x)
+    x
+end
 
+compat_32842 =
+    @static let  _v_mlstyle = begin
+                        import Pkg
+                        Pkg.installed()["MLStyle"]
+                    end
+                _v_mlstyle < v"0.3.1"
+            end ?
+        function _compat(ast)
+            @match ast begin
+                Expr(hd, tl...) => Expr(hd, map(_compat, tl)...)
+                s::String       => :(ID($s))
+                a               => a
+            end
+        end :
+        function _no_compat(ast)
+            ast
+        end
+
+
+macro compat_32842(ast)
+    compat_32842(ast) |> esc
+end
 
 count = 0
 
@@ -25,17 +50,6 @@ module Extension
     using MLStyle.MatchCore
     struct Record end
 
-    export @linq
-    macro linq(expr)
-        @match expr begin
-            :($subject.$method($(arg))) =>
-                :(begin
-                    $method($arg, $subject)
-                end) |> esc
-            _ => @error "invalid"
-        end
-    end
-
     ASTGen = parentmodule(Extension)
 
     def_app_pattern(Extension,
@@ -52,13 +66,26 @@ module Extension
         end,
         qualifiers = Set([(_, u) -> u === ASTGen])
     )
+
+    def_app_pattern(Extension,
+        predicate = (hd_obj, args) -> hd_obj == ASTGen.ID,
+        rewrite = (tag, hd_obj, args, mod) ->
+        let str = args[1], pat = :(&$str)
+            mk_pattern(tag, pat, mod)
+        end,
+        qualifiers = Set([(_, u) -> u === ASTGen])
+    )
 end
 
-using .Extension: Record, @linq
+using .Extension: Record
 
 macro not_implemented_yet()
     :(throw("notimplemented yet"))
 end
+
+# start compat_32842
+@compat_32842 begin
+
 
 empty_block = Expr(:block)
 
@@ -391,11 +418,18 @@ function to_ast(filename, python :: Dict)
           end
         this ->
             let msg = "class: $(this[:class]), attributes: $(keys(this))."
+                @match this begin
+                    Dict(:class=>"Module") => println(:aaa)
+                    ::T where T => println(T)
+                end
                 throw(msg)
             end
     end
 
     apply(python)
 end
+
+end # end compat_32842
+
 
 end
