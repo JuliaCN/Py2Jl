@@ -6,9 +6,9 @@ Python-to-Julia transpiler. Python 3 semantics are used (see below).
 
 ## Usage
 
-For now, because of a bug in Julia itself, LTS version of Julia, e.g. Julia 1.0.4 and 1.0.0 do not work. The package intends to support LTS Julia too, and will as soon as Julia is fixed.
+For now, because of a bug in Julia itself, long-term-support (LTS) versions of Julia, e.g. Julia 1.0.4 and 1.0.0 do not work. The package intends to support LTS Julia too, and will as soon as Julia is fixed.
 
-Th package now works on 1.1.x, and before on [Julia 1.1.0-rc2](https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.0-rc2-linux-x86_64.tar.gz), but earlier versions at least those nameed LTS ones do segfault.
+Th package now works on 1.1.x, and before on [Julia 1.1.0-rc2](https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.0-rc2-linux-x86_64.tar.gz), but earlier versions, at least those named LTS ones, do segfault.
 
 ```shell
 pkg> add Py2Jl
