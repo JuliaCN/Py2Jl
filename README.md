@@ -69,7 +69,7 @@ libs
 
 ## Python 3 vs. older Python
 
-Most of the differences between Python 2 and Python 3 do not matter, as not yet implemented. E.g. this valid Python 2 code translates, but with Python 3 semandtics:
+Most of the differences between Python 2 and Python 3 do not matter, as not yet implemented. E.g. this valid Python 2 code translates, but with Python 3 semantics:
 
 ```
 julia> py2jl"""
