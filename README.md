@@ -1,6 +1,6 @@
 # Py2Jl
 
-Python-to-Julia transpiler.
+Python-to-Julia transpiler. Python 3 semantics are used (see below).
 
 [![Preview](./preview.png)](./preview.png)
 
@@ -57,7 +57,7 @@ Julia ones.
 - Arbitrary `try-except`s
 - Annotation (but not equivalent to Julia's)
 
-## Not Implemented Features
+## Not Implemented (yet) Features
 
 - Function definitions with keyword args (both `kwargs` and so-called
 `keyword arg`), default args and variadic args
@@ -66,3 +66,17 @@ Julia ones.
 - Attributes (`obj.attr`)
 - Python-compatible built-in functions like `map`, `print` and many standard
 libs
+
+## Python 3 vs. older Python
+
+Most of the differences between Python 2 and Python 3 do not matter, as not yet implemented. E.g. this valid Python 2 code translates, but with Python 3 semantics:
+
+```
+julia> py2jl"""
+       def divide_by_two(x):
+         return x/2
+       """
+
+julia> divide_by_two(9)  # Python 2, unlike Python 3 and Julia would return 4.
+4.5
+```
