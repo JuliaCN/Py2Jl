@@ -6,11 +6,10 @@ Python-to-Julia transpiler.
 
 ## Usage
 
+For now because a bug in Julia itself, [Julia 1.1.0-rc2](https://julialang-s3.julialang.org/bin/linux/x64/1.1/julia-1.1.0-rc2-linux-x86_64.tar.gz) is the only known version of Julia to be able to run this program. Current latest Julia 1.0.4 and 1.0.0, have been tested produce a segmentation fault. Julia 1.1.1 and 1.1.0 do not, but they have other issues. 
+
 ```shell
-pkg> add PyCall JSON MLStyle
-julia> ENV["PYTHON"] = raw"<your python exe path>"
-pkg> build PyCall
-pkg> add https://github.com/JuliaCN/Py2Jl.jl#master
+pkg> add Jy2Jl
 ```
 
 To demonstrate, open a file (check out [demo.jl](./demo.jl)) and write
