@@ -418,6 +418,12 @@ function to_ast(filename, python :: Dict)
               call(op, apply(left), apply(right))
           end
 
+        # for Python 3.8+
+        (Record(:class => "Constant", value)
+         || # for Python 3.7- and 3.7
+         Record(:class => "NameConstant", value)
+        ) -> value
+
         Record(:class=> "Compare", left, ops, comparators) ->
           foldl(zip(ops, comparators) |> collect, init=apply(left)) do last, (op, comparator)
                 let comparator = apply(comparator)
