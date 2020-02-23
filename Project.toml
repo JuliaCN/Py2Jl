@@ -10,3 +10,7 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PrettyPrint = "8162dcfd-2161-5ef2-ae6c-7681170c5f98"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+PyCall = "1.90"
+julia = "1.0"
