@@ -3,31 +3,9 @@ export to_ast
 using MLStyle
 using JSON
 
+@nospecialize
 @inline function ID(x)
     x
-end
-
-compat_32842 =
-    @static let  _v_mlstyle = begin
-                        import Pkg
-                        Pkg.installed()["MLStyle"]
-                    end
-                _v_mlstyle < v"0.3.1"
-            end ?
-        function _compat(ast)
-            @match ast begin
-                Expr(hd, tl...) => Expr(hd, map(_compat, tl)...)
-                s::String       => :(ID($s))
-                a               => a
-            end
-        end :
-        function _no_compat(ast)
-            ast
-        end
-
-
-macro compat_32842(ast)
-    compat_32842(ast) |> esc
 end
 
 count = 0
@@ -44,48 +22,34 @@ mangle() = begin
 end
 
 
-module Extension
-    using MLStyle
-    using MLStyle.Infras
-    using MLStyle.MatchCore
-    struct Record end
+struct Record end
 
-    ASTGen = parentmodule(Extension)
-
-    def_app_pattern(Extension,
-        predicate = (hd_obj, args) -> hd_obj === Record,
-        rewrite = (tag, hd_obj, args, mod) ->
-        let
-            args = ((arg isa Symbol ?
-                    let key = QuoteNode(arg)
-                        :($key => $arg)
-                    end : arg)
-                    for arg in args)
-            pat = :(Dict($(args...)))
-            mk_pattern(tag, pat, mod)
-        end,
-        qualifiers = Set([(_, u) -> u === ASTGen])
-    )
-
-    def_app_pattern(Extension,
-        predicate = (hd_obj, args) -> hd_obj == ASTGen.ID,
-        rewrite = (tag, hd_obj, args, mod) ->
-        let str = args[1], pat = :(&$str)
-            mk_pattern(tag, pat, mod)
-        end,
-        qualifiers = Set([(_, u) -> u === ASTGen])
-    )
+"""
+define a pattern `Record(a, b, c=>c, ...)`
+identical to Dict `Dict(a=a, b=b, c=>, ...)`
+"""
+function MLStyle.pattern_uncall(
+    ::Type{Record},
+    self,
+    tparams::AbstractArray,
+    targs::AbstractArray,
+    args::AbstractArray,
+)
+    isempty(tparams) || error("A Record pattern requires no type params.")
+    isempty(targs) || error("A Record pattern requires no type arguments.")
+    isempty(tparams) || error("A Record pattern requires no type parameters.")
+    args = ((arg isa Symbol ?
+                let key = QuoteNode(arg)
+                    :($key => $arg)
+                end : arg)
+            for arg in args)
+    pat = :($Dict($(args...)))
+    self(pat)
 end
-
-using .Extension: Record
 
 macro not_implemented_yet()
     :(throw("notimplemented yet"))
 end
-
-# start compat_32842
-@compat_32842 begin
-
 
 empty_block = Expr(:block)
 
@@ -456,7 +420,6 @@ function to_ast(filename, python :: Dict)
     apply(python)
 end
 
-end # end compat_32842
-
+@specialize
 
 end
