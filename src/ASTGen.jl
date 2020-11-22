@@ -156,175 +156,184 @@ function isinstance(inst, typ)
     Expr(:call, isa, inst, typ)
 end
 
+struct Context
+    filename
+    imports
+end
 
-"""
-Check https://github.com/python/cpython/blob/master/Parser/Python.asdl
-for more implementation details.
-"""
-function to_ast(filename, python :: Dict)
-    tag_loc = @λ begin
-        (if filename === nothing end &&
-        Record(lineno, colno)) -> LineNumberNode(lineno)
+filename(x) = x.filename
 
-        Record(lineno, colno) -> LineNumberNode(lineno, filename)
+function tag_loc(ctx, x)
+    _filename = filename(ctx)
+    @λ begin
+        (if _filename === nothing end &&
+         Record(lineno, colno)) -> LineNumberNode(lineno)
+
+        Record(lineno, colno) -> LineNumberNode(lineno, _filename)
 
         _ -> nothing
     end
+end
 
-    function trans_block(seq)
-        res = []
-        for each in seq
-            loc = tag_loc(each)
-            if loc !== nothing
-                push!(res, loc)
-            end
-            push!(res, apply(each))
+
+function trans_block(ctx, seq)
+    res = []
+    for each in seq
+        loc = tag_loc(ctx, each)
+        if loc !== nothing
+            push!(res, loc)
         end
-        res
+        push!(res, apply(ctx, each))
     end
+    res
+end
 
-    apply = @λ begin
+function fundef(ctx, class, body, kwarg, args, kw_defaults, kwonlyargs, defaults, vararg, fn_ast)
+    if kwarg === nothing && isempty(kwonlyargs)
+        if isempty(kw_defaults) && isempty(defaults)
+            f = @λ Expr(:no_eval, arg, annotation) -> (arg, annotation)
+            arg_anno = map(x -> f(apply(ctx, x)), args)
+            args = map(first, arg_anno)
+            annos = [annotate(arg, anno) for (arg, anno) in arg_anno if anno !== nothing]
+
+            if class == "Lambda"
+                Expr(:function, Expr(:tuple, args...), Expr(:block, annos..., apply(ctx, body)))
+            else
+
+                body = gather <| trans_block(ctx, body)
+                decorator_list = fn_ast[:decorator_list]
+                fn_name = Symbol(fn_ast[:name])
+                init = Expr(:function, Expr(:call, fn_name, args...), Expr(:block, annos..., body))
+                reduce(decorator_list, init=init) do last, decorator
+                    decorator = apply(ctx, decorator)
+                    wrapped = call(decorator, last)
+                    Expr(:(=), fn_name, Expr(:let, empty_block, wrapped))
+                end |> ret_nil
+            end
+        else
+            @not_implemented_yet
+        end
+    else
+        @not_implemented_yet
+    end
+end
+
+function apply(ctx, x)
+    _apply = @λ begin
         (num :: Number)  -> num
         (str :: String)  -> str
         (:: Nothing)     -> nothing
 
         Record(:class => "Module", body) ->
-                let body = gather <| trans_block(body)
+        let body = gather <| trans_block(ctx, body)
 
-                    filename === nothing ?
-                    body                 :
-                    Expr(:module, true, Symbol(filename), body)
-                end
+            filename === nothing ?
+                body                 :
+                Expr(:module, true, Symbol(filename), body)
+        end
 
         Record(:class => "Name", id) ->
-            Symbol(id)
+        Symbol(id)
         Record(:class => "Num", n) -> n
 
         Record(:class => "List", elts) ->
-            Expr(:vect, map(apply, elts)...)
+        Expr(:vect, map(apply, elts)...)
 
         Record(:class => "Tuple", elts) ->
-            Expr(:tuple, map(apply, elts)..., )
+        Expr(:tuple, map(apply, elts)..., )
 
-        Record(:class => "Return", value) -> Expr(:return, apply(value))
+        Record(:class => "Return", value) -> Expr(:return, apply(ctx, value))
 
-        Record(:class => "arg", annotation, arg) -> Expr(:no_eval, Symbol(arg), apply(annotation))
+        Record(:class => "arg", annotation, arg) -> Expr(:no_eval, Symbol(arg), apply(ctx, annotation))
+
+        # FunctionDef
         (Record(class,
                 body,
                 :args => Record(
-                   kwarg,
-                   args,
-                   kw_defaults,
-                   kwonlyargs,
-                   defaults,
-                   vararg
-               )) && fn_ast) ->
-             begin
-                if kwarg === nothing && isempty(kwonlyargs)
-                   if isempty(kw_defaults) && isempty(defaults)
-                        f = @λ Expr(:no_eval, arg, annotation) -> (arg, annotation)
-                        arg_anno = map(f ∘ apply, args)
-                        args = map(first, arg_anno)
-                        annos = [annotate(arg, anno) for (arg, anno) in arg_anno if anno !== nothing]
-
-                        if class == "Lambda"
-                            Expr(:function, Expr(:tuple, args...), Expr(:block, annos..., apply(body)))
-                        else
-
-                            body = gather <| trans_block(body)
-                            decorator_list = fn_ast[:decorator_list]
-                            fn_name = Symbol(fn_ast[:name])
-                            init = Expr(:function, Expr(:call, fn_name, args...), Expr(:block, annos..., body))
-                            reduce(decorator_list, init=init) do last, decorator
-                                decorator = apply(decorator)
-                                wrapped = call(decorator, last)
-                                Expr(:(=), fn_name, Expr(:let, empty_block, wrapped))
-                            end |> ret_nil
-                        end
-                   else
-                        @not_implemented_yet
-                   end
-                else
-                    @not_implemented_yet
-                end
-             end
+                    kwarg,
+                    args,
+                    kw_defaults,
+                    kwonlyargs,
+                    defaults,
+                    vararg
+                )) && fn_ast) -> fundef(ctx, class, body, kwarg, args, kw_defaults, kwonlyargs, defaults, vararg, fn_ast)
 
         Record(:class   => "Assign", targets, value) ->
-             (reduce(targets, init = apply(value)) do last, target
-                Expr(:(=), apply(target), last)
-             end |> ret_nil)
+        (reduce(targets, init = apply(ctx, value)) do last, target
+         Expr(:(=), apply(ctx, target), last)
+         end |> ret_nil)
 
         Record(:class => "AugAssign", target, op, value) -> @not_implemented_yet
 
         Record(:class => "AnnAssign", target, annotation, value) ->
-            (annotate(apply(target), apply(annotation)) |>
-            target -> assign(target, value)            |>
-            ret_nil)
+        (annotate(apply(ctx, target), apply(ctx, annotation)) |>
+         target -> assign(target, value)            |>
+         ret_nil)
 
         Record(:class => "For", target, iter, body, orelse) ->
-            let target = apply(target),
-                iter = apply(iter),
-                body = gather <| trans_block(body),
-                orelse = gather <| trans_block(orelse)
+        let target = apply(ctx, target),
+            iter = apply(ctx, iter),
+            body = gather <| trans_block(ctx, body),
+            orelse = gather <| trans_block(ctx, orelse)
 
-                for_iter(target, iter, body) do token
-                    ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
-                end
-
+            for_iter(target, iter, body) do token
+                ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
             end
+
+        end
 
         Record(:class => "While", test, body, orelse) ->
-            let cond = apply(test),
-                body = gather <| trans_block(body),
-                orelse = gather <| trans_block(orelse)
+        let cond = apply(ctx, test),
+            body = gather <| trans_block(ctx, body),
+            orelse = gather <| trans_block(ctx, orelse)
 
-                 while_loop(cond, body) do token
-                    ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
-                 end
+            while_loop(cond, body) do token
+                ifelse(Expr(:call, !, get_attr(token, :x)), orelse)
             end
+        end
 
         Record(:class => "With") -> @not_implemented_yet
 
         Record(:class => "ClassDef") -> @not_implemented_yet
 
         Record(:class => "Try", body, handlers, orelse, finalbody) ->
-            if !isempty(finalbody) || !isempty(orelse)
-                @not_implemented_yet
-            else
-                ret = Expr(:try, gather <| trans_block(body))
-                if isempty(handlers)
-                    return ret
-                end
-                except = mangle()
-                args = ret.args
-                push!(args, except)
-                init = call(throw, except)
-                foldr(handlers, init = init) do handler, last
-                    @match handler begin
-                        Record(:type => exc, name, body) =>
-                            let exc = apply(exc),
-
-                                body = gather <| trans_block(body),
-
-                                tc = isinstance(except, exc),
-
-                                case = name === nothing ? body : gather([
-                                    assign(name, except),
-                                    body
-                                ])
-
-                                ifelse(tc, body, last)
-                            end
-                        _ => @error "Unknown python ast."
-                    end
-                end |> it -> push!(args, it)
-                ret
+        if !isempty(finalbody) || !isempty(orelse)
+            @not_implemented_yet
+        else
+            ret = Expr(:try, gather <| trans_block(ctx, body))
+            if isempty(handlers)
+                return ret
             end
+            except = mangle()
+            args = ret.args
+            push!(args, except)
+            init = call(throw, except)
+            foldr(handlers, init = init) do handler, last
+                @match handler begin
+                    Record(:type => exc, name, body) =>
+                        let exc = apply(ctx, exc),
+
+                            body = gather <| trans_block(ctx, body),
+
+                            tc = isinstance(except, exc),
+
+                            case = name === nothing ? body : gather([
+                                assign(name, except),
+                                body
+                            ])
+
+                            ifelse(tc, body, last)
+                        end
+                    _ => @error "Unknown python ast."
+                end
+            end |> it -> push!(args, it)
+            ret
+        end
 
         # runtime error
         Record(:class => "Raise", :exc => nothing, :cause => nothing)   -> @not_implemented_yet
 
-        Record(:class => "Raise", exc, :cause => nothing) -> call(throw, apply(exc))
+        Record(:class => "Raise", exc, :cause => nothing) -> call(throw, apply(ctx, exc))
 
         Record(:class => "Raise", :exc => _, :cause => _) -> @not_implemented_yet
 
@@ -341,83 +350,91 @@ function to_ast(filename, python :: Dict)
         Record(:class => "Continue") -> continue!()
 
         Record(:class => "If", test, body, orelse) ->
-            let cond = apply(test),
-                body = gather <| trans_block(body),
-                orelse = gather <| trans_block(orelse)
+        let cond = apply(ctx, test),
+            body = gather <| trans_block(ctx, body),
+            orelse = gather <| trans_block(ctx, orelse)
 
-                ret_nil <| ifelse(cond, body, orelse)
-            end
+            ret_nil <| ifelse(cond, body, orelse)
+        end
 
-        Record(:class => "Expr", value) -> ret_nil <| apply(value)
+        Record(:class => "Expr", value) -> ret_nil <| apply(ctx, value)
 
-        Record(:class => "Starred", value) -> Expr(:..., apply(value))
+        Record(:class => "Starred", value) -> Expr(:..., apply(ctx, value))
 
         Record(:class => "Call", func, args, keywords) ->
-            begin
-                func = apply(func)
-                args = map(apply, args)
-                keywords = [(it[:arg], apply(it[:value])) for it in keywords]
-                kw_unpack = [Expr(:..., snd) for (fst, snd) in keywords if fst === nothing]
-                kw_args = [Expr(:kw, fst, snd) for (fst, snd) in keywords if fst !== nothing]
-                Expr(:call, func, Expr(:parameters, kw_unpack...), args..., kw_args...)
-            end
+        begin
+            func = apply(ctx, func)
+            args = map(apply, args)
+            keywords = [(it[:arg], apply(it[:value])) for it in keywords]
+            kw_unpack = [Expr(:..., snd) for (fst, snd) in keywords if fst === nothing]
+            kw_args = [Expr(:kw, fst, snd) for (fst, snd) in keywords if fst !== nothing]
+            Expr(:call, func, Expr(:parameters, kw_unpack...), args..., kw_args...)
+        end
         Record(:class => "BinOp", op, left, right) ->
-          let op =  @match op[:class] begin
-               # TODO, binary operator in Python cannot be mapped to Julia directly.
-               # We should implement Python.(+), Python.(-)...
-               "Add"     => (+)
-               "Sub"     => (-)
-               "Mult"    => (*)
-               "Div"     => (/)
-               "MatMult" => @not_implemented_yet
-               "Mod"     => (%)
-               "Pow"     => (^)
-               "LShift"  => (<<)
-               "RShift"  => (>>)
-               "BitOr"   => (|)
-               "BitXor"  => xor
-               "BitAnd"  => (&)
-               "FloorDiv"=> floor ∘ (/)
-          end
-              call(op, apply(left), apply(right))
-          end
+        let op =  @match op[:class] begin
+            # TODO, binary operator in Python cannot be mapped to Julia directly.
+            # We should implement Python.(+), Python.(-)...
+            "Add"     => (+)
+            "Sub"     => (-)
+            "Mult"    => (*)
+            "Div"     => (/)
+            "MatMult" => @not_implemented_yet
+            "Mod"     => (%)
+            "Pow"     => (^)
+            "LShift"  => (<<)
+            "RShift"  => (>>)
+            "BitOr"   => (|)
+            "BitXor"  => xor
+            "BitAnd"  => (&)
+            "FloorDiv"=> floor ∘ (/)
+        end
+            call(op, apply(ctx, left), apply(ctx, right))
+        end
 
         # for Python 3.8+
         (Record(:class => "Constant", value)
          || # for Python 3.7- and 3.7
          Record(:class => "NameConstant", value)
-        ) -> value
+         ) -> value
 
         Record(:class=> "Compare", left, ops, comparators) ->
-          foldl(zip(ops, comparators) |> collect, init=apply(left)) do last, (op, comparator)
-                let comparator = apply(comparator)
-                    f = @match op[:class] begin
-                        #  Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
-                        "Eq" => (==)
-                        "NotEq" => (!=)
-                        "Lt" => (<)
-                        "LtE" => (<=)
-                        "Gt"  => (>)
-                        "GtE" => (>=)
-                        "Is"  => (===)
-                        "IsNot" => (!==)
-                        "In"    => (in)
-                        "NotIn" => (!in)
-                    end
-                    :($f($last, $comparator))
+        foldl(zip(ops, comparators) |> collect, init=apply(ctx, left)) do last, (op, comparator)
+            let comparator = apply(ctx, comparator)
+                f = @match op[:class] begin
+                    #  Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+                    "Eq" => (==)
+                    "NotEq" => (!=)
+                    "Lt" => (<)
+                    "LtE" => (<=)
+                    "Gt"  => (>)
+                    "GtE" => (>=)
+                    "Is"  => (===)
+                    "IsNot" => (!==)
+                    "In"    => (in)
+                    "NotIn" => (!in)
                 end
-          end
-        this ->
-            let msg = "class: $(this[:class]), attributes: $(keys(this))."
-                @match this begin
-                    Dict(:class=>"Module") => println(:aaa)
-                    ::T where T => println(T)
-                end
-                throw(msg)
+                :($f($last, $comparator))
             end
+        end
+        this ->
+        let msg = "class: $(this[:class]), attributes: $(keys(this))."
+            @match this begin
+                Dict(:class=>"Module") => println(:aaa)
+                ::T where T => println(T)
+            end
+            throw(msg)
+        end
     end
+    _apply(x)
+end
 
-    apply(python)
+
+"""
+Check https://github.com/python/cpython/blob/master/Parser/Python.asdl
+for more implementation details.
+"""
+function to_ast(ctx, python :: Dict)
+    apply(ctx, python)
 end
 
 @specialize
