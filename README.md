@@ -1,4 +1,11 @@
+## Notes
+
+This package has been tentatively suspended.
+
+You might want to check out [py2many](https://github.com/adsharma/py2many) for Python-to-Julia transpilation.
+
 # Py2Jl
+
 
 Python-to-Julia transpiler. Python 3 semantics are used (see below).
 
