@@ -4,7 +4,7 @@
 
 This project aims at providing a Py2Jl transpiler targeting the compatibility level 1 and 2 mentioned in the section [#CPython Compatibility Level](#cpython-compatibility-level), while the methods to support libraries like `numpy`, `scipy` or `pytorch` will be given in the documentation.
 
-This project is in its early stage, and now we only partly achieves the level 1 compatibility. This means that you can already write performant Julia code using pure Python, but you might not succeed in transforming any existing Python codebase to Julia with this tool.
+This project is in its early stage, and now we have only partly achieved the level 1 compatibility. This means that you can already write performant Julia code using pure Python, but you might not succeed in transforming any existing Python codebase to Julia with this tool.
 
 ## Usage
 
@@ -12,7 +12,8 @@ This project is in its early stage, and now we only partly achieves the level 1 
 python -m Py2Jl input.py output.jl
 ```
 
-To runtime the generated Julia code, you should include the package `Py2JlRuntime` included in the `runtime-support` folder.
+To run the generated Julia code, you should add the package `Py2JlRuntime` to your environment (e.g., `pkg> dev runtime-support/Py2JlRuntime`). 
+The package `Py2JlRuntime` is included in the `runtime-support` folder.
 
 
 ## CPython Compatibility Level
